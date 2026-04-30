@@ -14,20 +14,27 @@ namespace SamplePlugin
         public override int Order => 0;
 
         private IInkCanvasService _inkCanvasService;
+        private IAppRestartService _appRestartService;
         private Views.SettingsView _settingsView;
 
         public override void Initialize(IPluginHost host)
         {
             base.Initialize(host);
             Log(string.Format("{0} 已初始化", Name));
-            
+
             _inkCanvasService = GetService<IInkCanvasService>();
             if (_inkCanvasService != null)
             {
                 Log("已获取 InkCanvas 服务");
             }
-            
-            _settingsView = new Views.SettingsView(_inkCanvasService, host);
+
+            _appRestartService = GetService<IAppRestartService>();
+            if (_appRestartService != null)
+            {
+                Log("已获取重启服务，当前运行状态: " + (_appRestartService.IsRunningAsAdmin ? "管理员" : "非管理员"));
+            }
+
+            _settingsView = new Views.SettingsView(_inkCanvasService, _appRestartService, host);
         }
 
         public override void Shutdown()

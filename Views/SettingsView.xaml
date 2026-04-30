@@ -31,7 +31,22 @@
                 FontSize="16"
                 HorizontalAlignment="Left"
                 Margin="0,0,0,20"/>
-        
+
+        <Button x:Name="SwitchPrivilegeButton"
+                Width="200"
+                Height="40"
+                FontSize="14"
+                HorizontalAlignment="Left"
+                Margin="0,0,0,10"/>
+
+        <Button x:Name="RestartButton"
+                Content="重启应用"
+                Width="200"
+                Height="40"
+                FontSize="14"
+                HorizontalAlignment="Left"
+                Margin="0,0,0,10"/>
+
         <TextBlock x:Name="StatusText"
                    Text="等待操作..."
                    FontSize="14"
