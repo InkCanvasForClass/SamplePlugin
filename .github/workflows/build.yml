@@ -14,12 +14,12 @@ jobs:
 
     steps:
     - name: Checkout plugin
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4.2.2
       with:
         path: SamplePlugin
 
     - name: Checkout SDK
-      uses: actions/checkout@v4
+      uses: actions/checkout@v4.2.2
       with:
         repository: InkCanvasForClass/community
         path: community
