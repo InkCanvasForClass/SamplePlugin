@@ -14,18 +14,18 @@ jobs:
 
     steps:
     - name: Checkout plugin
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v6.0.2
       with:
         path: SamplePlugin
 
     - name: Checkout SDK
-      uses: actions/checkout@v4.2.2
+      uses: actions/checkout@v6.0.2
       with:
         repository: InkCanvasForClass/community
         path: community
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v5.2.0
       with:
         dotnet-version: '6.0.x'
 
@@ -36,7 +36,7 @@ jobs:
       run: dotnet build SamplePlugin/SamplePlugin.csproj --configuration Release --no-restore
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7.0.1
       with:
         name: SamplePlugin
         path: SamplePlugin/bin/Release/net6.0-windows10.0.19041.0/
