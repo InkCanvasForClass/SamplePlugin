@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\community\InkCanvas.PluginSdk\InkCanvas.PluginSdk.csproj" Private="False" />
+    <ProjectReference Include="..\community\InkCanvas.Controls\InkCanvas.Controls.csproj" Private="False" />
   </ItemGroup>
 
 </Project>
