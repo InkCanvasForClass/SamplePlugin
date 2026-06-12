@@ -58,7 +58,7 @@ namespace SamplePlugin
             {
                 Id = "sample.button",
                 DisplayName = "示例按钮",
-                Description = "示例普通组件，使用 ToolbarImageButton 控件",
+                Description = "示例普通组件，点击打开菜单弹窗",
                 ViewFactory = () =>
                 {
                     var btn = new ToolbarImageButton
@@ -68,11 +68,20 @@ namespace SamplePlugin
                     };
                     // 设置图标
                     btn.Icon.Geometry = Geometry.Parse("M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z");
-                    btn.ButtonMouseUp += (s, e) =>
-                    {
-                        MessageBox.Show("示例按钮被点击了！", "示例按钮");
-                    };
                     return btn;
+                },
+                PopupContentFactory = () =>
+                {
+                    return new PopupShellContent
+                    {
+                        Title = "示例菜单",
+                        InnerContent = new TextBlock
+                        {
+                            Text = "这是示例按钮的菜单内容",
+                            Margin = new Thickness(16),
+                            FontSize = 14
+                        }
+                    };
                 },
                 ApplyOrientation = (view, orientation) =>
                 {
