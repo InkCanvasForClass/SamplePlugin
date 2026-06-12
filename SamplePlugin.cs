@@ -12,18 +12,15 @@ namespace SamplePlugin
     /// <summary>
     /// 示例插件 - 演示如何开发 Ink Canvas 插件，包括工具栏组件的动态注册。
     /// </summary>
+    [PluginEntrance]
     public class SamplePlugin : PluginBase
     {
-        public override string Id => "SamplePlugin";
-        public override string Name => "示例插件";
-        public override string Version => "1.0.0";
-        public override string Description => "示例插件，演示工具栏组件动态注册";
-        public override string Author => "示例作者";
-        public override int Order => 0;
+        // 元数据（Id/Name/Version/Description/Author）从 manifest.json 自动读取，无需在代码中重复定义
 
         private IInkCanvasService _inkCanvasService;
         private IAppRestartService _appRestartService;
         private Views.SettingsView _settingsView;
+        private FrameworkElement _sampleButtonPopupContent;
 
         public override void Initialize(IPluginHost host)
         {
@@ -49,6 +46,35 @@ namespace SamplePlugin
             RegisterSampleCustomControl(host);
         }
 
+        private FrameworkElement CreateMenuContent(string menuStyle)
+        {
+            var innerText = new TextBlock
+            {
+                Text = "这是示例按钮的菜单内容",
+                Margin = new Thickness(16),
+                FontSize = 14
+            };
+
+            switch (menuStyle)
+            {
+                case "PopupTabShellContent":
+                    var tabShell = new PopupTabShellContent
+                    {
+                        InnerContent = innerText
+                    };
+                    tabShell.TabBar.Tabs.Add(new PopupTabItem { Header = "Tab 1" });
+                    tabShell.TabBar.Tabs.Add(new PopupTabItem { Header = "Tab 2" });
+                    tabShell.TabBar.SelectedIndex = 0;
+                    return tabShell;
+                default:
+                    return new PopupShellContent
+                    {
+                        Title = "示例菜单",
+                        InnerContent = innerText
+                    };
+            }
+        }
+
         /// <summary>
         /// 注册示例按钮 - 使用 ToolbarImageButton 的普通组件示例
         /// </summary>
@@ -72,16 +98,8 @@ namespace SamplePlugin
                 },
                 PopupContentFactory = () =>
                 {
-                    return new PopupShellContent
-                    {
-                        Title = "示例菜单",
-                        InnerContent = new TextBlock
-                        {
-                            Text = "这是示例按钮的菜单内容",
-                            Margin = new Thickness(16),
-                            FontSize = 14
-                        }
-                    };
+                    _sampleButtonPopupContent = CreateMenuContent("PopupShellContent");
+                    return _sampleButtonPopupContent;
                 },
                 ApplyOrientation = (view, orientation) =>
                 {
@@ -92,7 +110,25 @@ namespace SamplePlugin
                 },
                 ApplySettings = (view, settings) =>
                 {
-                    // 菜单样式设置可在此处应用
+                    if (settings == null) return;
+                    if (!settings.TryGetValue("menuStyle", out var val)) return;
+
+                    var menuStyle = val?.ToString() ?? "PopupShellContent";
+
+                    // 通过逻辑树找到父级 Popup 并替换内容
+                    var popup = LogicalTreeHelper.GetParent(_sampleButtonPopupContent) as Popup;
+                    if (popup != null)
+                    {
+                        var newContent = CreateMenuContent(menuStyle);
+                        popup.Child = newContent;
+                        _sampleButtonPopupContent = newContent;
+
+                        // 重新绑定关闭按钮
+                        if (newContent is PopupShellContent shell)
+                            shell.CloseButtonControl.Click += (s, e) => popup.IsOpen = false;
+                        else if (newContent is PopupTabShellContent tabShell)
+                            tabShell.CloseButtonControl.Click += (s, e) => popup.IsOpen = false;
+                    }
                 },
                 CustomSettings = new List<PluginToolbarSettingInfo>
                 {

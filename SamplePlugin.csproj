@@ -5,6 +5,8 @@
     <UseWPF>true</UseWPF>
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>disable</Nullable>
+    <!-- 设置为 true 可在编译后自动打包 .icpx 插件包 -->
+    <CreateIcpx>false</CreateIcpx>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +23,11 @@
       <HintPath>lib\InkCanvas.Controls.dll</HintPath>
       <Private>False</Private>
     </Reference>
+  </ItemGroup>
+
+  <!-- 自动将 manifest.json 复制到输出目录 -->
+  <ItemGroup>
+    <None Include="manifest.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
