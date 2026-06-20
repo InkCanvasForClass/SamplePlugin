@@ -85,6 +85,7 @@ namespace SamplePlugin
                 Id = "sample.button",
                 DisplayName = "示例按钮",
                 Description = "示例普通组件，点击打开菜单弹窗",
+                IconGeometry = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z",
                 ViewFactory = () =>
                 {
                     var btn = new ToolbarImageButton
@@ -157,6 +158,7 @@ namespace SamplePlugin
                 Id = "sample.customControl",
                 DisplayName = "示例自定义控件",
                 Description = "示例自定义控件插件，支持滑块、开关、复选框、下拉框等控制类型",
+                IconGeometry = "M3 5h18v2H3V5zm0 6h18v2H3v-2zm0 6h12v2H3v-2z",
                 ViewFactory = () =>
                 {
                     var border = new Border

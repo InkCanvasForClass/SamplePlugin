@@ -11,6 +11,39 @@ Write-Host "正在编译主程序..."
 dotnet build "$repoRoot\community\Ink Canvas\InkCanvasForClass.csproj" -c Debug
 if ($LASTEXITCODE -ne 0) { Write-Host "主程序编译失败！" -ForegroundColor Red; exit 1 }
 
+# 编译子项目（控件库和插件SDK）
+Write-Host "正在编译控件库 InkCanvas.Controls..."
+dotnet build "$repoRoot\community\InkCanvas.Controls\InkCanvas.Controls.csproj" -c Debug
+if ($LASTEXITCODE -ne 0) { Write-Host "控件库编译失败！" -ForegroundColor Red; exit 1 }
+
+Write-Host "正在编译插件SDK InkCanvas.PluginSdk..."
+dotnet build "$repoRoot\community\InkCanvas.PluginSdk\InkCanvas.PluginSdk.csproj" -c Debug
+if ($LASTEXITCODE -ne 0) { Write-Host "插件SDK编译失败！" -ForegroundColor Red; exit 1 }
+
+# 将子项目输出的 dll 更新到示例插件的 lib 目录
+$subProjectsOutput = "$repoRoot\community"
+$libDir = "$scriptDir\lib"
+
+if (-not (Test-Path $libDir)) {
+    New-Item -ItemType Directory -Path $libDir -Force | Out-Null
+    Write-Host "已创建 lib 目录"
+}
+
+$framework = "net6.0-windows10.0.19041.0"
+$dllsToUpdate = @(
+    @{ Name = "InkCanvas.Controls"; Path = "$subProjectsOutput\InkCanvas.Controls\bin\Debug\$framework\InkCanvas.Controls.dll" },
+    @{ Name = "InkCanvas.PluginSdk"; Path = "$subProjectsOutput\InkCanvas.PluginSdk\bin\Debug\$framework\InkCanvas.PluginSdk.dll" }
+)
+
+foreach ($dll in $dllsToUpdate) {
+    if (Test-Path $dll.Path) {
+        Copy-Item -Path $dll.Path -Destination $libDir -Force
+        Write-Host "已更新 $($dll.Name).dll 到 lib 目录"
+    } else {
+        Write-Host "警告：未找到 $($dll.Name).dll ($($dll.Path))" -ForegroundColor Yellow
+    }
+}
+
 # 编译示例插件
 Write-Host "正在编译示例插件..."
 dotnet build "$scriptDir\SamplePlugin.csproj" -c Debug
