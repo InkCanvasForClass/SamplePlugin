@@ -1,5 +1,6 @@
 using Ink_Canvas.Controls;
 using Ink_Canvas.Plugins;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Windows;
@@ -22,9 +23,9 @@ namespace SamplePlugin
         private Views.SettingsView _settingsView;
         private FrameworkElement _sampleButtonPopupContent;
 
-        public override void Initialize(IPluginHost host)
+        public override void Initialize(IPluginHost host, IServiceCollection services)
         {
-            base.Initialize(host);
+            base.Initialize(host, services);
             Log(string.Format("{0} 已初始化", Name));
 
             _inkCanvasService = GetService<IInkCanvasService>();
