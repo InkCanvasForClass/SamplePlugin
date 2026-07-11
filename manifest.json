@@ -1,7 +1,7 @@
 {
   "Id": "sample.plugin",
   "Name": "示例插件",
-  "Version": "1.0.0",
+  "Version": "1.0.1",
   "Description": "示例插件，演示工具栏组件动态注册",
   "Author": "示例作者",
   "EntranceAssembly": "SamplePlugin.dll",
