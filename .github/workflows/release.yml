@@ -1,0 +1,109 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+    steps:
+    - name: Checkout plugin
+      uses: actions/checkout@v6.0.2
+      with:
+        path: SamplePlugin
+
+    - name: Checkout SDK
+      uses: actions/checkout@v6.0.2
+      with:
+        repository: InkCanvasForClass/community
+        path: community
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v5.2.0
+      with:
+        dotnet-version: '6.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore SamplePlugin/SamplePlugin.csproj
+
+    - name: Build
+      run: dotnet build SamplePlugin/SamplePlugin.csproj --configuration Release --no-restore
+
+    - name: Package .icpx
+      shell: pwsh
+      run: |
+        $outputDir = "SamplePlugin/bin/Release/net6.0-windows10.0.19041.0"
+        $manifest = Get-Content "$outputDir/manifest.json" | ConvertFrom-Json
+        $pluginId = $manifest.Id
+
+        # 收集文件到临时目录
+        $tempDir = Join-Path $env:TEMP "icpx_$pluginId"
+        if (Test-Path $tempDir) { Remove-Item $tempDir -Recurse -Force }
+        New-Item -ItemType Directory -Path $tempDir | Out-Null
+
+        # 打包必要文件（排除 .pdb 等调试文件）
+        $files = @("manifest.json", "$($manifest.EntranceAssembly)", "*.deps.json")
+        foreach ($pattern in $files) {
+          Get-ChildItem "$outputDir/$pattern" -ErrorAction SilentlyContinue |
+            Copy-Item -Destination $tempDir
+        }
+
+        # 创建 .icpx (ZIP)
+        $icpxPath = "packages/$pluginId.icpx"
+        New-Item -ItemType Directory -Path "packages" | Out-Null
+        Compress-Archive -Path "$tempDir/*" -DestinationPath "$pluginId.zip" -Force
+        Move-Item "$pluginId.zip" $icpxPath -Force
+
+        # 计算 SHA256
+        $hash = (Get-FileHash $icpxPath -Algorithm SHA256).Hash.ToLower()
+        echo "ICPX_PATH=$icpxPath" >> $env:GITHUB_OUTPUT
+        echo "PLUGIN_ID=$pluginId" >> $env:GITHUB_OUTPUT
+        echo "SHA256=$hash" >> $env:GITHUB_OUTPUT
+        echo "VERSION=$($manifest.Version)" >> $env:GITHUB_OUTPUT
+        Write-Host "Packaged: $icpxPath (SHA256: $hash)"
+
+    - name: Get tag
+      id: tag
+      shell: bash
+      run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "tag=${{ github.event.inputs.tag }}" >> $GITHUB_OUTPUT
+        else
+          echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.tag.outputs.tag }}
+        name: ${{ steps.tag.outputs.tag }}
+        body: |
+          ## ${{ steps.package.outputs.PLUGIN_ID }} ${{ steps.package.outputs.VERSION }}
+
+          ### 安装方法
+          1. 下载下方的 `.icpx` 文件
+          2. 将其放入 ICC-CE 的 `PluginPackages/` 目录
+          3. 重启 ICC-CE 即可自动安装
+
+          ### 校验信息
+          ```
+          SHA256: ${{ steps.package.outputs.SHA256 }}
+          ```
+        files: ${{ steps.package.outputs.ICPX_PATH }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
