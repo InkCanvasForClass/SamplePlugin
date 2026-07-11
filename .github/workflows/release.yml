@@ -36,6 +36,22 @@ jobs:
       with:
         dotnet-version: '6.0.x'
 
+    - name: Copy SDK DLLs
+      shell: pwsh
+      run: |
+        $framework = "net6.0-windows10.0.19041.0"
+        $sdkDir = "community/InkCanvas.PluginSdk/bin/Debug/$framework"
+        $ctrlDir = "community/InkCanvas.Controls/bin/Debug/$framework"
+        $libDir = "SamplePlugin/lib"
+        if (Test-Path "$sdkDir/InkCanvas.PluginSdk.dll") {
+          Copy-Item "$sdkDir/InkCanvas.PluginSdk.dll" $libDir -Force
+          Write-Host "Copied InkCanvas.PluginSdk.dll"
+        }
+        if (Test-Path "$ctrlDir/InkCanvas.Controls.dll") {
+          Copy-Item "$ctrlDir/InkCanvas.Controls.dll" $libDir -Force
+          Write-Host "Copied InkCanvas.Controls.dll"
+        }
+
     - name: Restore dependencies
       run: dotnet restore SamplePlugin/SamplePlugin.csproj
 
@@ -43,6 +59,7 @@ jobs:
       run: dotnet build SamplePlugin/SamplePlugin.csproj --configuration Release --no-restore
 
     - name: Package .icpx
+      id: package
       shell: pwsh
       run: |
         $outputDir = "SamplePlugin/bin/Release/net6.0-windows10.0.19041.0"
@@ -54,25 +71,30 @@ jobs:
         if (Test-Path $tempDir) { Remove-Item $tempDir -Recurse -Force }
         New-Item -ItemType Directory -Path $tempDir | Out-Null
 
-        # 打包必要文件（排除 .pdb 等调试文件）
-        $files = @("manifest.json", "$($manifest.EntranceAssembly)", "*.deps.json")
-        foreach ($pattern in $files) {
-          Get-ChildItem "$outputDir/$pattern" -ErrorAction SilentlyContinue |
-            Copy-Item -Destination $tempDir
+        # 打包必要文件
+        foreach ($f in @("manifest.json", $manifest.EntranceAssembly, "$($manifest.EntranceAssembly -replace '\.dll$','.deps.json')")) {
+          $src = Join-Path $outputDir $f
+          if (Test-Path $src) {
+            Copy-Item $src $tempDir
+            Write-Host "  + $f"
+          }
         }
 
-        # 创建 .icpx (ZIP)
-        $icpxPath = "packages/$pluginId.icpx"
-        New-Item -ItemType Directory -Path "packages" | Out-Null
-        Compress-Archive -Path "$tempDir/*" -DestinationPath "$pluginId.zip" -Force
-        Move-Item "$pluginId.zip" $icpxPath -Force
+        # 创建 .icpx (先 .zip 再重命名)
+        $outDir = "SamplePlugin/packages"
+        New-Item -ItemType Directory -Path $outDir -Force | Out-Null
+        $zipPath = Join-Path $outDir "$pluginId.zip"
+        $icpxPath = Join-Path $outDir "$pluginId.icpx"
+        Compress-Archive -Path "$tempDir/*" -DestinationPath $zipPath -Force
+        if (Test-Path $icpxPath) { Remove-Item $icpxPath }
+        Rename-Item $zipPath $icpxPath
 
         # 计算 SHA256
         $hash = (Get-FileHash $icpxPath -Algorithm SHA256).Hash.ToLower()
-        echo "ICPX_PATH=$icpxPath" >> $env:GITHUB_OUTPUT
-        echo "PLUGIN_ID=$pluginId" >> $env:GITHUB_OUTPUT
-        echo "SHA256=$hash" >> $env:GITHUB_OUTPUT
-        echo "VERSION=$($manifest.Version)" >> $env:GITHUB_OUTPUT
+        echo "icpx_path=$icpxPath" >> $env:GITHUB_OUTPUT
+        echo "plugin_id=$pluginId" >> $env:GITHUB_OUTPUT
+        echo "sha256=$hash" >> $env:GITHUB_OUTPUT
+        echo "version=$($manifest.Version)" >> $env:GITHUB_OUTPUT
         Write-Host "Packaged: $icpxPath (SHA256: $hash)"
 
     - name: Get tag
@@ -91,7 +113,7 @@ jobs:
         tag_name: ${{ steps.tag.outputs.tag }}
         name: ${{ steps.tag.outputs.tag }}
         body: |
-          ## ${{ steps.package.outputs.PLUGIN_ID }} ${{ steps.package.outputs.VERSION }}
+          ## ${{ steps.package.outputs.plugin_id }} v${{ steps.package.outputs.version }}
 
           ### 安装方法
           1. 下载下方的 `.icpx` 文件
@@ -100,9 +122,9 @@ jobs:
 
           ### 校验信息
           ```
-          SHA256: ${{ steps.package.outputs.SHA256 }}
+          SHA256: ${{ steps.package.outputs.sha256 }}
           ```
-        files: ${{ steps.package.outputs.ICPX_PATH }}
+        files: ${{ steps.package.outputs.icpx_path }}
         draft: false
         prerelease: false
       env:
