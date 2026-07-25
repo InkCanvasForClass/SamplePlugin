@@ -18,7 +18,7 @@ namespace SamplePlugin
     {
         // 元数据（Id/Name/Version/Description/Author）从 manifest.json 自动读取，无需在代码中重复定义
 
-        private IInkCanvasService _inkCanvasService;
+        private IWindowService _windowService;
         private IAppRestartService _appRestartService;
         private Views.SettingsView _settingsView;
         private FrameworkElement _sampleButtonPopupContent;
@@ -28,10 +28,10 @@ namespace SamplePlugin
             base.Initialize(host, services);
             Log(string.Format("{0} 已初始化", Name));
 
-            _inkCanvasService = GetService<IInkCanvasService>();
-            if (_inkCanvasService != null)
+            _windowService = GetService<IWindowService>();
+            if (_windowService != null)
             {
-                Log("已获取 InkCanvas 服务");
+                Log("已获取窗口服务");
             }
 
             _appRestartService = GetService<IAppRestartService>();
@@ -40,7 +40,7 @@ namespace SamplePlugin
                 Log("已获取重启服务，当前运行状态: " + (_appRestartService.IsRunningAsAdmin ? "管理员" : "非管理员"));
             }
 
-            _settingsView = new Views.SettingsView(_inkCanvasService, _appRestartService, host);
+            _settingsView = new Views.SettingsView(_windowService, _appRestartService, host);
 
             // 注册示例工具栏组件
             RegisterSampleButton(host);

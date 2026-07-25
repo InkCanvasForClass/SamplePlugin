@@ -7,14 +7,14 @@ namespace SamplePlugin.Views
 {
     public partial class SettingsView : UserControl
     {
-        private IInkCanvasService _inkCanvasService;
+        private IWindowService _windowService;
         private IAppRestartService _appRestartService;
         private IPluginHost _host;
 
-        public SettingsView(IInkCanvasService inkCanvasService, IAppRestartService appRestartService, IPluginHost host)
+        public SettingsView(IWindowService windowService, IAppRestartService appRestartService, IPluginHost host)
         {
             InitializeComponent();
-            _inkCanvasService = inkCanvasService;
+            _windowService = windowService;
             _appRestartService = appRestartService;
             _host = host;
 
@@ -93,17 +93,17 @@ namespace SamplePlugin.Views
 
         private void OpenWhiteboardButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_inkCanvasService == null)
+            if (_windowService == null)
             {
-                UpdateStatus("❌ 无法获取白板服务", Colors.Red);
-                _host?.LogError("无法获取白板服务");
+                UpdateStatus("❌ 无法获取窗口服务", Colors.Red);
+                _host?.LogError("无法获取窗口服务");
                 return;
             }
 
             try
             {
                 UpdateStatus("⏳ 正在打开白板...", Colors.Orange);
-                _inkCanvasService.OpenWhiteboard();
+                _windowService.EnterWhiteboard();
                 UpdateStatus("✅ 白板已成功打开！", Colors.Green);
                 _host?.Log("白板已通过插件打开");
             }
@@ -116,17 +116,17 @@ namespace SamplePlugin.Views
 
         private void CloseWhiteboardButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_inkCanvasService == null)
+            if (_windowService == null)
             {
-                UpdateStatus("❌ 无法获取白板服务", Colors.Red);
-                _host?.LogError("无法获取白板服务");
+                UpdateStatus("❌ 无法获取窗口服务", Colors.Red);
+                _host?.LogError("无法获取窗口服务");
                 return;
             }
 
             try
             {
                 UpdateStatus("⏳ 正在关闭白板...", Colors.Orange);
-                _inkCanvasService.CloseWhiteboard();
+                _windowService.ExitWhiteboard();
                 UpdateStatus("✅ 白板已成功关闭！", Colors.Green);
                 _host?.Log("白板已通过插件关闭");
             }
