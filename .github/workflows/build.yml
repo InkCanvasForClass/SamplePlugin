@@ -15,5 +15,7 @@ jobs:
     with:
       project: SamplePlugin.csproj
       plugin_id: sample.plugin
-      create_release: false
+      plugin_name: 示例插件
+      plugin_description: '示例插件，演示工具栏组件动态注册'
+      auto_release: true
     secrets: inherit
